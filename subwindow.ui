@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>subwindow</class>
+ <widget class="QDialog" name="subwindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>648</width>
+    <height>239</height>
+   </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>648</width>
+    <height>239</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>648</width>
+    <height>239</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>Dialog</string>
+  </property>
+  <widget class="QDialogButtonBox" name="buttonBox">
+   <property name="geometry">
+    <rect>
+     <x>440</x>
+     <y>190</y>
+     <width>191</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+   <property name="standardButtons">
+    <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+   </property>
+  </widget>
+  <widget class="QSplitter" name="splitter_7">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>0</y>
+     <width>631</width>
+     <height>161</height>
+    </rect>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+   <widget class="QWidget" name="layoutWidget">
+    <layout class="QGridLayout" name="gridLayout">
+     <item row="0" column="1">
+      <widget class="QSplitter" name="splitter_5">
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+       <widget class="QLabel" name="label_2">
+        <property name="text">
+         <string>Destination</string>
+        </property>
+       </widget>
+       <widget class="QComboBox" name="Destination_ComboBox"/>
+      </widget>
+     </item>
+     <item row="0" column="2">
+      <widget class="QSplitter" name="splitter_2">
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+       <widget class="QLabel" name="label_3">
+        <property name="text">
+         <string>Strategy</string>
+        </property>
+       </widget>
+       <widget class="QComboBox" name="Strategy_ComboBox">
+        <item>
+         <property name="text">
+          <string>Least Cost</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Least Time</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Limit Time</string>
+         </property>
+        </item>
+       </widget>
+      </widget>
+     </item>
+     <item row="0" column="0">
+      <widget class="QSplitter" name="splitter_6">
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string>Location</string>
+        </property>
+        <property name="textFormat">
+         <enum>Qt::PlainText</enum>
+        </property>
+       </widget>
+       <widget class="QComboBox" name="Location_ComboBox">
+        <property name="sizeAdjustPolicy">
+         <enum>QComboBox::AdjustToContents</enum>
+        </property>
+       </widget>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QSplitter" name="splitter_4">
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+       <widget class="QLabel" name="label_5">
+        <property name="text">
+         <string>via(2)</string>
+        </property>
+       </widget>
+       <widget class="QComboBox" name="Via_2_ComboBox">
+        <item>
+         <property name="text">
+          <string>(Blank)</string>
+         </property>
+        </item>
+       </widget>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QSplitter" name="splitter">
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+       <widget class="QLabel" name="label_4">
+        <property name="text">
+         <string>via(1)</string>
+        </property>
+       </widget>
+       <widget class="QComboBox" name="Via_1_ComboBox">
+        <item>
+         <property name="text">
+          <string>(Blank)</string>
+         </property>
+        </item>
+       </widget>
+      </widget>
+     </item>
+     <item row="1" column="2">
+      <widget class="QSplitter" name="splitter_3">
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+       <widget class="QLabel" name="label_6">
+        <property name="text">
+         <string>via(3)</string>
+        </property>
+       </widget>
+       <widget class="QComboBox" name="Via_3_ComboBox">
+        <item>
+         <property name="text">
+          <string>(Blank)</string>
+         </property>
+        </item>
+       </widget>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+   <widget class="QListWidget" name="Customer_Plan_List"/>
+  </widget>
+  <widget class="QSplitter" name="splitter_8">
+   <property name="geometry">
+    <rect>
+     <x>250</x>
+     <y>180</y>
+     <width>111</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+   <widget class="QLabel" name="label_7">
+    <property name="text">
+     <string>In</string>
+    </property>
+   </widget>
+   <widget class="QSpinBox" name="Limit_Time_spinBox">
+    <property name="maximum">
+     <number>5040</number>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_8">
+    <property name="text">
+     <string>hours</string>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QSplitter" name="splitter_9">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>180</y>
+     <width>191</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+   <widget class="QLabel" name="label_9">
+    <property name="text">
+     <string>Customer ID:</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="Customer_ID_Label">
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
+  </widget>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>accepted()</signal>
+   <receiver>subwindow</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>749</x>
+     <y>420</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>620</x>
+     <y>382</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>subwindow</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>750</x>
+     <y>421</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>725</x>
+     <y>353</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>

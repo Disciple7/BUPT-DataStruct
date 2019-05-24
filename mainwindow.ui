@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1032</width>
+    <height>703</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralWidget">
+   <widget class="QPushButton" name="Exit_Button">
+    <property name="geometry">
+     <rect>
+      <x>920</x>
+      <y>610</y>
+      <width>93</width>
+      <height>28</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&amp;Exit</string>
+    </property>
+   </widget>
+   <widget class="QListWidget" name="Shift_Table_Widget">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>20</y>
+      <width>741</width>
+      <height>141</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QSplitter" name="splitter_2">
+    <property name="geometry">
+     <rect>
+      <x>760</x>
+      <y>20</y>
+      <width>256</width>
+      <height>571</height>
+     </rect>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
+    </property>
+    <widget class="QSplitter" name="splitter">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <widget class="QPushButton" name="Add_Button">
+      <property name="text">
+       <string>Add Customer</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="Change_Button">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
+      <property name="text">
+       <string>Change Customer</string>
+      </property>
+     </widget>
+    </widget>
+    <widget class="QListWidget" name="Customer_Table_Widget"/>
+   </widget>
+   <widget class="QWidget" name="widget" native="true">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>170</y>
+      <width>741</width>
+      <height>421</height>
+     </rect>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QToolBar" name="mainToolBar">
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+  </widget>
+  <widget class="QStatusBar" name="statusBar"/>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>Exit_Button</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>close()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>760</x>
+     <y>577</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>645</x>
+     <y>453</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Customer_Table_Widget</sender>
+   <signal>itemSelectionChanged()</signal>
+   <receiver>Change_Button</receiver>
+   <slot>update()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>768</x>
+     <y>172</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>761</x>
+     <y>82</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <signal>add_or_change_customer_signal()</signal>
+  <signal>timer_signal()</signal>
+  <slot>add_or_change_customer_slot()</slot>
+  <slot>timer_slot()</slot>
+ </slots>
+</ui>
