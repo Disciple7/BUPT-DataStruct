@@ -10,6 +10,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    setWindowTitle("Travel System");
     ui->Change_Button->setEnabled(false);//初始化删除按钮不可点击，当有旅客选中时才可点击
     connect(ui->Customer_Table_Widget,SIGNAL(itemSelectionChanged()),this,SLOT(set_Change_Button_Enabled()));
     //：启动程序的步骤。需要做如下工作：(在MainWindow的构造函数中）
@@ -18,9 +19,8 @@ MainWindow::MainWindow(QWidget *parent) :
     //构造旅客类容器
     //初始化计时器
     current_datetime=QDateTime::currentDateTime();
-    logInit();
-    logEvent();
-    timer.start(10000);//                                     正式版本timer应该为10000，这里用1000，更新快一点
+    this->LogEvent("Log has been initialized.\nProgram is running\n");
+    timer.start(1000);//                                     正式版本timer应该为10000，这里用1000，更新快一点
 
     //初始化一些航班表
     shift_table_init(city_dict,shift_table,current_datetime);
@@ -98,28 +98,30 @@ void MainWindow::QTimerEvent()
     //绘制地图（选）
     //**以下迭代器中的算法仅为模板，其他部分设计完成后需要重写。**
     current_datetime=current_datetime.addSecs(3600);//加上3600秒（一小时）
-    logEvent(current_datetime.date(),current_datetime.time());
+    LogEvent("Clock flushing... "+current_datetime.toString());
     //旅客信息类容器的刷新
     for(vector<customer>::iterator now_customer=customer_list.begin();now_customer!=customer_list.end();)
     {
-        for(vector<shift>::iterator now_plan = now_customer->customer_shift.begin();now_plan!=now_customer->customer_shift.end();)
+        for(vector<shift>::iterator now_plan = now_customer->customer_plan.begin();now_plan!=now_customer->customer_plan.end();)
         {//该循环刷新某个旅客的计划
-            if(now_plan->begin_Qdatetime<=current_datetime)
+            if(now_customer->data_pack.event_flag==0&&now_plan->begin_Qdatetime<=current_datetime)
             {
-                now_customer->data_pack.start_city_ID=now_plan->begin_city_ID;//修改旅客的出发地点为航班到达地点，毕竟在车上不能中途下去
-                cout<<"Customer "<<now_customer->data_pack.customer_ID<<" , Shift "<<now_plan->shift_ID<<" has begun."<<endl;
+                now_customer->data_pack.start_city_ID=now_plan->end_city_ID;//修改旅客的出发地点为航班到达地点，毕竟在车上不能中途下去
+                LogEvent("Customer "+QString::number(now_customer->data_pack.customer_ID)+" , Shift "+QString::number(now_plan->shift_ID)+" has begun.");
+                now_customer->data_pack.event_flag=1;//不要让Log复读......读了一次就别读了。只有当完成这个航班时才可能再次发送Log
             }
             if(now_plan->end_Qdatetime<=current_datetime)//如果正乘坐的航班结束时间晚于当前时间，把这个航班从旅客计划表上删除
             {
-                logEvent(now_customer->data_pack.customer_ID,now_plan->shift_ID);
-                now_plan=now_customer->customer_shift.erase(now_plan);
+                this->LogEvent("Customer "+QString::number(now_customer->data_pack.customer_ID)+" has finished a shift(shift id: "+QString::number(now_plan->shift_ID)+" ).");
+                now_plan=now_customer->customer_plan.erase(now_plan);
+                now_customer->data_pack.event_flag=0;
             }
             else
                 now_plan++;
         }
-        if(now_customer->customer_shift.size()==0)//如果旅客的计划上已经没有航班，把这个旅客从旅客容器中删除
+        if(now_customer->customer_plan.size()==0)//如果旅客的计划上已经没有航班，把这个旅客从旅客容器中删除
        {
-            logEvent(*now_customer);//日志记录
+            LogEvent("Customer "+QString::number(now_customer->data_pack.customer_ID)+" has finished all the journey. Infomation has been cleared.");//日志记录
             QString delete_customer_ID=QString::number(now_customer->data_pack.customer_ID);
             for(int item_count=0;item_count<ui->Customer_Table_Widget->count();item_count++)//该循环从窗口中删除这个旅客的ID
             {
@@ -149,8 +151,11 @@ void MainWindow::QTimerEvent()
                         break;
                     }
                 }
-                ui->Shift_Table_Widget->addItem(QString::number(now_shift->shift_ID)+"\t"+city_dict.get_city_name(now_shift->begin_city_ID)+"\t"+city_dict.get_city_name(now_shift->end_city_ID)+"\t"+now_shift->begin_Qdatetime.time().toString()+"\t"+now_shift->end_Qdatetime.time().toString()
-                                                +"\t"+QString::number(now_shift->frequncy)+"day(s)\t"+now_shift->begin_Qdatetime.toString()+"\t"+now_shift->end_Qdatetime.toString());
+                ui->Shift_Table_Widget->addItem(QString::number(now_shift->shift_ID)+"\t"
+                                                +city_dict.get_city_name(now_shift->begin_city_ID)+"\t"+city_dict.get_city_name(now_shift->end_city_ID)+"\t"
+                                                +now_shift->begin_Qdatetime.time().toString()+"\t"+now_shift->end_Qdatetime.time().toString()
+                                                +"\t"+QString::number(now_shift->frequncy)+"day(s)\t"
+                                                +now_shift->begin_Qdatetime.toString()+"\t"+now_shift->end_Qdatetime.toString());
             }
             else
             {
@@ -160,8 +165,7 @@ void MainWindow::QTimerEvent()
     }
     if(ui->Customer_Table_Widget->count()==0)//当旅客列表都被删除时，Change按钮恢复不可点击状态
         ui->Change_Button->setEnabled(false);
-    ui->statusBar->showMessage(current_datetime.toString());//刷新状态栏上的日期和时间
-    cout<<"Flush succeeded"<<endl;
+    ui->statusBar->showMessage(current_datetime.toString());//刷新状态栏上的日期和时间;
 }
 
 void MainWindow::new_customer_created_slot(customer new_customer)
@@ -181,7 +185,9 @@ void MainWindow::new_customer_created_slot(customer new_customer)
     }//检索并删除旧的customer信息（如果有的话）
 
     //调用策略函数，设置该乘客的行程。
-    cout<<new_customer.strategy(shift_table,current_datetime)<<endl;
+    int strategy_flag=new_customer.strategy(shift_table,current_datetime);
+    if(strategy_flag==-1)
+        LogEvent("Customer : "+QString::number(new_customer.data_pack.customer_ID)+" raised an unsatisfiable request.\nThe customer info will be deleted soon.");
 
     customer_list.push_back(new_customer);//无论是否已存在这个customer，都把它加入列表
     if(delete_customer_ID_flag==false)//如果上面的删除没有删除掉customer_ID，则说明是一个新的ID，加入到窗口中。
@@ -236,7 +242,7 @@ void shift_table_init(city_name_dict& city_dict,vector<vector<shift>>& shift_tab
         string tmp_string;//读取文件一行
         shift_file>>tmp_string;
         QStringList Qtmp_string_list=QString::fromStdString(tmp_string).split(',');//切割成List
-        if(Qtmp_string_list.size()!=6)
+        if(Qtmp_string_list.size()!=7)
             break;
         shift new_shift;
         new_shift.begin_city_ID=Qtmp_string_list[0].toInt();
@@ -262,28 +268,25 @@ void shift_table_init(city_name_dict& city_dict,vector<vector<shift>>& shift_tab
         else
             new_shift.time_cost_hours=0;
         new_shift.frequncy=1;
-        new_shift.transport_ID=0;
+        new_shift.transport_ID=Qtmp_string_list[6].toStdString();
         new_shift.time_cost_hours+=Qtmp_string_list[5].toInt()-Qtmp_string_list[4].toInt();
         shift_table[new_shift.begin_city_ID].push_back(new_shift);
     }
-
-
-    /*
-    qsrand(0);//随机种子设置成0，方便测试
-    int i;
-
-    for(i=0;i<CITY_NUM+1;i++)
+}
+void MainWindow::LogEvent(QString event_Qstring)
+{
+    if(ui->Log_listWidget->count()>50)
     {
-        shift new_shift;
-        new_shift.shift_ID =qrand()%10000;
-        new_shift.transport_ID=qrand()%3;
-        new_shift.begin_city_ID=i;
-        new_shift.end_city_ID=(i+1)%11;//起始和结束城市ID不同
-        new_shift.begin_Qdatetime=current_datetime.addSecs(60*i);
-        new_shift.time_cost_hours=qrand()%7;
-        new_shift.end_Qdatetime=new_shift.begin_Qdatetime.addSecs(new_shift.time_cost_hours*3600);
-        new_shift.money_cost=(qrand()%1000)*new_shift.time_cost_hours/(new_shift.transport_ID+1);
-        new_shift.frequncy=1;
-        shift_table[new_shift.begin_city_ID].push_back(new_shift);
-    }*/
+        ui->Log_listWidget->clear();
+        ui->Log_listWidget->addItem("Log has been cleared automatically due to too many messages.");
+    }
+    ui->Log_listWidget->addItem(event_Qstring);
+
+    fstream log_file;
+    if(DEV_MODE)
+        log_file.open("D:\\coding\\Qt\\Travel_System\\log_file.txt",ios::in|ios::out|ios::app);
+    else
+        log_file.open("log_file.txt",ios::in|ios::out|ios::app);
+    log_file<<event_Qstring.toStdString()<<endl;
+    log_file.close();
 }

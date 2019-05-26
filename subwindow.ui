@@ -178,55 +178,43 @@
    </widget>
    <widget class="QListWidget" name="Customer_Plan_List"/>
   </widget>
-  <widget class="QSplitter" name="splitter_8">
+  <widget class="QSplitter" name="splitter_10">
    <property name="geometry">
     <rect>
-     <x>250</x>
+     <x>10</x>
      <y>180</y>
-     <width>111</width>
+     <width>401</width>
      <height>21</height>
     </rect>
    </property>
    <property name="orientation">
     <enum>Qt::Horizontal</enum>
    </property>
-   <widget class="QLabel" name="label_7">
-    <property name="text">
-     <string>In</string>
+   <widget class="QSplitter" name="splitter_9">
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
     </property>
+    <widget class="QLabel" name="label_9">
+     <property name="text">
+      <string>Customer ID:</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="Customer_ID_Label">
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
    </widget>
-   <widget class="QSpinBox" name="Limit_Time_spinBox">
-    <property name="maximum">
-     <number>5040</number>
+   <widget class="QSplitter" name="splitter_8">
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
     </property>
-   </widget>
-   <widget class="QLabel" name="label_8">
-    <property name="text">
-     <string>hours</string>
-    </property>
-   </widget>
-  </widget>
-  <widget class="QSplitter" name="splitter_9">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>180</y>
-     <width>191</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="orientation">
-    <enum>Qt::Horizontal</enum>
-   </property>
-   <widget class="QLabel" name="label_9">
-    <property name="text">
-     <string>Customer ID:</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="Customer_ID_Label">
-    <property name="text">
-     <string/>
-    </property>
+    <widget class="QLabel" name="label_7">
+     <property name="text">
+      <string>Before</string>
+     </property>
+    </widget>
+    <widget class="QDateTimeEdit" name="Limit_Time_dateTimeEdit"/>
    </widget>
   </widget>
  </widget>

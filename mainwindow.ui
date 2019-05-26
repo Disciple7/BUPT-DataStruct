@@ -27,16 +27,6 @@
      <string>&amp;Exit</string>
     </property>
    </widget>
-   <widget class="QListWidget" name="Shift_Table_Widget">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>20</y>
-      <width>741</width>
-      <height>141</height>
-     </rect>
-    </property>
-   </widget>
    <widget class="QSplitter" name="splitter_2">
     <property name="geometry">
      <rect>
@@ -69,15 +59,30 @@
     </widget>
     <widget class="QListWidget" name="Customer_Table_Widget"/>
    </widget>
-   <widget class="QWidget" name="widget" native="true">
+   <widget class="QSplitter" name="splitter_4">
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>170</y>
+      <y>20</y>
       <width>741</width>
-      <height>421</height>
+      <height>571</height>
      </rect>
     </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
+    </property>
+    <widget class="QListWidget" name="Shift_Table_Widget"/>
+    <widget class="QSplitter" name="splitter_3">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <widget class="QLabel" name="label">
+      <property name="text">
+       <string>System Log</string>
+      </property>
+     </widget>
+     <widget class="QListWidget" name="Log_listWidget"/>
+    </widget>
    </widget>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
@@ -100,8 +105,8 @@
    <slot>close()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>760</x>
-     <y>577</y>
+     <x>920</x>
+     <y>624</y>
     </hint>
     <hint type="destinationlabel">
      <x>645</x>
@@ -120,8 +125,8 @@
      <y>172</y>
     </hint>
     <hint type="destinationlabel">
-     <x>761</x>
-     <y>82</y>
+     <x>879</x>
+     <y>96</y>
     </hint>
    </hints>
   </connection>

@@ -29,6 +29,8 @@ public:
 public:
     QDateTime current_datetime;
 
+public:
+    void LogEvent(QString);
 
 signals:
     void create_a_new_customer_signal();

@@ -11,6 +11,7 @@ customer::customer(Customer_ID customer_id)
     data_pack.via_city_1_ID=0;
     data_pack.via_city_2_ID=0;
     data_pack.via_city_3_ID=0;
+    data_pack.event_flag=0;
     if(DEV_MODE)
         cout << data_pack.customer_ID<<" has been constructed."<<endl;
 }
@@ -22,13 +23,14 @@ customer::customer()
     data_pack.via_city_1_ID=0;
     data_pack.via_city_2_ID=0;
     data_pack.via_city_3_ID=0;
+    data_pack.event_flag=0;
 }
 customer::customer(const customer& customer_a)
 {
-    customer_shift.clear();
-    for (vector<shift>::const_iterator a = customer_a.customer_shift.begin();a!=customer_a.customer_shift.end();a++)
+    customer_plan.clear();
+    for (vector<shift>::const_iterator a = customer_a.customer_plan.begin();a!=customer_a.customer_plan.end();a++)
 	{
-        customer_shift.push_back(*a);//这里不是压入指针，而是压入迭代器a（a是指针）指向的内容
+        customer_plan.push_back(*a);//这里不是压入指针，而是压入迭代器a（a是指针）指向的内容
 	}
     data_pack = customer_a.data_pack;
     if(DEV_MODE)
@@ -41,10 +43,10 @@ customer::~customer()
 }
 customer& customer::operator=(const customer& customer_a)
 {
-    customer_shift.clear();
-    for (auto &a : customer_a.customer_shift)
+    customer_plan.clear();
+    for (auto &a : customer_a.customer_plan)
 	{
-        customer_shift.push_back(a);
+        customer_plan.push_back(a);
 	}
     data_pack = customer_a.data_pack;
 	return *this;
@@ -81,7 +83,7 @@ int add_city(int size,vector<QDateTime>& weight,vector<bool> is_checked)
     return min_weight_city;
 }
 
-void flush_shift_plan(QDateTime& now_datetime,vector<vector<shift>>& shift_table_for_plan)//这个函数其实还可以在QTimeEvent中再用一次的......但是写的比那个晚，就算了。
+void flush_shift_table(QDateTime& now_datetime,vector<vector<shift>>& shift_table_for_plan)//这个函数其实还可以在QTimeEvent中再用一次的......但是写的比那个晚，就算了。
 {
 
     for(vector<vector<shift>>::iterator now_shift_line=shift_table_for_plan.begin();now_shift_line!=shift_table_for_plan.end();now_shift_line++)
@@ -196,9 +198,9 @@ int customer::strategy(vector<vector<shift>> shift_table,QDateTime true_datetime
                     shortest_shift_link[destination][copy_shift_num].begin_Qdatetime=shortest_shift_link[destination][copy_shift_num].begin_Qdatetime.addDays(1);//加一天。
                     shortest_shift_link[destination][copy_shift_num].end_Qdatetime=shortest_shift_link[destination][copy_shift_num].end_Qdatetime.addDays(1);
                 }
-                customer_shift.push_back(shortest_shift_link[destination][copy_shift_num]);
+                customer_plan.push_back(shortest_shift_link[destination][copy_shift_num]);
             }
-            destination_QDatetime=customer_shift.back().end_Qdatetime;//下一轮的开始时间更新为已经选择航班的最晚时间
+            destination_QDatetime=customer_plan.back().end_Qdatetime;//下一轮的开始时间更新为已经选择航班的最晚时间
             break;
         }
         case 2://策略3：限制时间最少费用算法。在策略2的基础上修改。如果策略2结果不满足则计划置空。
@@ -233,7 +235,7 @@ int customer::strategy(vector<vector<shift>> shift_table,QDateTime true_datetime
                 {
                     now_city=add_city(shift_table.size(),weight,is_checked);
                     is_checked[now_city]=true;
-                    flush_shift_plan(weight[now_city],shift_table_for_plan);
+                    flush_shift_table(weight[now_city],shift_table_for_plan);
                 }
                 //遍历这个城市now_city的航班表，若shift_table_for_plan[now_city][j]的cost+weight[now_city]（从起点到now_city的cost）小于weight[j]（从起点到j的权）
                 //则把shift_link[j]清空，把shift_link[now_city]压进去，再压入now_city到j的这列航班。
@@ -254,18 +256,55 @@ int customer::strategy(vector<vector<shift>> shift_table,QDateTime true_datetime
             }
             //最后把起点->终点的最佳路径压到用户的路径表中。
             for(int copy_shift_num=0;copy_shift_num<shortest_shift_link[destination].size();copy_shift_num++)
-                customer_shift.push_back(shortest_shift_link[destination][copy_shift_num]);
-            if(data_pack.strategy_ID==3)//策略3在策略2基础上修改。
+                customer_plan.push_back(shortest_shift_link[destination][copy_shift_num]);
+            if(data_pack.strategy_ID==1)
             {
-                destination_QDatetime=customer_shift.back().end_Qdatetime;
+                destination_QDatetime=customer_plan.back().end_Qdatetime;
+                flush_shift_table(destination_QDatetime,shift_table_for_plan);
+                break;//这个是策略2的返回出口
+            }
+            //策略3：限制时间最少费用算法。在策略2的基础上修改。如果策略2结果不满足则计划置空。策略3在策略2基础上修改。
+            else if(data_pack.strategy_ID==2)//策略3在策略2基础上修改
+            {
+                if(customer_plan.back().end_Qdatetime>data_pack.limit_datetime)//策略2的时间比要求时间还晚就不用做了，根本不可能实现。
+                {
+                    customer_plan.clear();//清空这个旅客表并返回一个负值，让LogEvent记录日志。
+                    return -1;
+                }
+                else
+                {
+                    vector<shift> strategy3_plan;
+                    shift_plan_copy(customer_plan,strategy3_plan);//拷贝策略2的路径表
+                    for(int i=0;i<strategy3_plan.size();i++)
+                    {
+                        City_ID begin_city_ID=strategy3_plan[i].begin_city_ID;
+                        City_ID end_city_ID=strategy3_plan[i].end_city_ID;
+                        shift substitute_shift;
+                        for(int j=0;j<shift_table_for_plan[begin_city_ID].size();j++)
+                        {
+                            if(shift_table_for_plan[begin_city_ID][j].end_city_ID==end_city_ID)
+                            {
+                                substitute_shift=shift_table_for_plan[begin_city_ID][j];
+                                strategy3_plan[i]=substitute_shift;
+                                flush_shift_plan(strategy3_plan);
+                                if(strategy3_plan.back().end_Qdatetime<data_pack.limit_datetime)
+                                    shift_plan_copy(strategy3_plan,customer_plan);
+                                else
+                                    shift_plan_copy(customer_plan,strategy3_plan);
+                            }
+                        }
+                    }
+                    //1.对每一个航班，寻找相同起点和终点，但价格更便宜的航班。
+                    //2.选择一个替代航班以后，校正（可能会推迟）计划表中所有的航班。检查到达时间是否成立。
+                    //3.如果不成立，则把customer_shift拷贝到strategy3_plan。否则将strategy3_plan拷贝到customer_shift中
+                    //4.重复123操作，直到遍历strategy3_plan为止。
+                    destination_QDatetime=customer_plan.back().end_Qdatetime;
+                    flush_shift_table(destination_QDatetime,shift_table_for_plan);
+                }
                 break;//这个是策略3的返回出口
             }
             else
-            {
-                destination_QDatetime=customer_shift.back().end_Qdatetime;
-                flush_shift_plan(destination_QDatetime,shift_table_for_plan);
-                break;//这个是策略2的返回出口
-            }
+                return -1;
         }
         }
     }
@@ -289,4 +328,28 @@ City_ID city_name_dict::get_city_id(QString city_name)
 QString city_name_dict::get_city_name(City_ID city_id)
 {
     return city_name_list[city_id];
+}
+
+void shift_plan_copy(const vector<shift>& from_shift_plan,vector<shift>& to_shift_plan)
+{
+    to_shift_plan.clear();
+    for(int i=0;i<from_shift_plan.size();i++)
+        to_shift_plan.push_back(from_shift_plan[i]);
+}
+
+void flush_shift_plan(vector<shift>& shift_plan)
+{
+    for(int i=0;i<shift_plan.size()-1;i++)
+    {
+        while(shift_plan[i].end_Qdatetime<shift_plan[i+1].begin_Qdatetime)//有可能遇到shift_table已经被刷新到后一段时间去了的情形。此时把这些计划航班先往回推到非法，再校正一下即可。
+        {
+            shift_plan[i+1].begin_Qdatetime=shift_plan[i+1].begin_Qdatetime.addDays(-1);
+            shift_plan[i+1].end_Qdatetime=shift_plan[i+1].end_Qdatetime.addDays(-1);
+        }
+        while(shift_plan[i].end_Qdatetime>shift_plan[i+1].begin_Qdatetime)
+        {
+            shift_plan[i+1].begin_Qdatetime=shift_plan[i+1].begin_Qdatetime.addDays(1);
+            shift_plan[i+1].end_Qdatetime=shift_plan[i+1].end_Qdatetime.addDays(1);
+        }
+    }
 }

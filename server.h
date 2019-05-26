@@ -8,11 +8,12 @@
 using namespace std;
 
 
-typedef int Transport_ID;
+typedef string Transport_ID;
 typedef int Customer_ID;
 typedef int City_ID;
 typedef int Shift_ID;
 typedef int Strategy_ID;
+typedef int Event_Flag;
 
 struct shift
 {
@@ -29,6 +30,7 @@ struct shift
 
 struct Data_Pack
 {
+    Event_Flag event_flag;
 	Customer_ID customer_ID;
 	City_ID start_city_ID;
 	City_ID end_city_ID;
@@ -36,12 +38,12 @@ struct Data_Pack
 	City_ID via_city_2_ID;
 	City_ID via_city_3_ID;
     Strategy_ID strategy_ID;
-    int limit_time=0;
+    QDateTime limit_datetime;
 };
 class customer
 {
 public://如果需要的话这个也可以改成public
-    vector<shift> customer_shift;
+    vector<shift> customer_plan;
 public://写private太麻烦了，干脆全部public了，省的还要写set和get函数一大堆。
     Data_Pack data_pack;
 public:
@@ -66,7 +68,8 @@ public:
 };
 int add_city(int size,vector<QDateTime>& weight,vector<bool> is_checked);//策略2用的，寻找一个最短时间的城市
 int add_city(int size,vector<int>& weight,vector<bool> is_checked);//策略1用的，寻找一个最小花费的城市。
-void flush_shift_plan(QDateTime& now_datetime,vector<vector<shift>>& shift_table_for_plan);//每次加入一个航班后，都要看这个航班的结束时间（写到now_datetime里了）是不是早于某些航班的开始时间。如果是则刷新这些航班（日期加1）
-
+void flush_shift_table(QDateTime& now_datetime,vector<vector<shift>>& shift_table_for_plan);//每次加入一个航班后，都要看这个航班的结束时间（写到now_datetime里了）是不是早于某些航班的开始时间。如果是则刷新这些航班（日期加1）
+void shift_plan_copy(const vector<shift>& from_shift_plan,vector<shift>& to_shift_plan);
+void flush_shift_plan(vector<shift>& shift_plan);
 
 #endif //SERVER_H
