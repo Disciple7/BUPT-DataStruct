@@ -6,6 +6,7 @@
 #include<QObject>
 #include<QDateTime>
 #include"subwindow.h"
+#include<fstream>
 
 namespace Ui {
 class MainWindow;

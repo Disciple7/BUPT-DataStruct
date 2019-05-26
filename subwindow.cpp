@@ -75,19 +75,39 @@ void subwindow::create_a_new_customer_slot()
     ui->Via_2_ComboBox->setCurrentIndex(0);
     ui->Via_3_ComboBox->setCurrentIndex(0);
     ui->Limit_Time_spinBox->setValue(0);
+    ui->Customer_Plan_List->clear();
 }
 
 void subwindow::change_this_customer_slot(customer this_customer)
 {
     ui->Customer_ID_Label->setNum(this_customer.data_pack.customer_ID);
-    ui->Destination_ComboBox->setCurrentText(QString::number(this_customer.data_pack.start_city_ID));//这些涉及城市名字的以后都要改
-    ui->Location_ComboBox->setCurrentText(QString::number(this_customer.data_pack.end_city_ID));
+    ui->Destination_ComboBox->setCurrentIndex(this_customer.data_pack.end_city_ID-1);//这些涉及城市名字的以后都要改
+    ui->Location_ComboBox->setCurrentIndex(this_customer.data_pack.start_city_ID-1);
+    if(this_customer.data_pack.start_city_ID==this_customer.customer_shift.front().end_city_ID)//当乘客的开始地点为其航班的到达地点时，说明他在旅途中。此时不能修改开始地点。
+        ui->Location_ComboBox->setEnabled(false);
     ui->Strategy_ComboBox->setCurrentIndex(this_customer.data_pack.strategy_ID);//Strategy读取的是序号，不像其他ID一样
+    if(this_customer.data_pack.strategy_ID!=2)
+        ui->Limit_Time_spinBox->setValue(0);
+    else
+        ui->Limit_Time_spinBox->setValue(this_customer.data_pack.limit_time);
     if(this_customer.data_pack.via_city_1_ID!=0)
-        ui->Via_1_ComboBox->setCurrentText(QString::number(this_customer.data_pack.via_city_1_ID));
+        ui->Via_1_ComboBox->setCurrentIndex(this_customer.data_pack.via_city_1_ID);
+    else
+        ui->Via_1_ComboBox->setCurrentIndex(0);
+    if(ui->Via_1_ComboBox->currentIndex()!=0&&this_customer.data_pack.via_city_2_ID!=0)
+        ui->Via_2_ComboBox->setCurrentIndex(this_customer.data_pack.via_city_2_ID);
+    else
+        ui->Via_2_ComboBox->setCurrentIndex(0);
+    if(ui->Via_2_ComboBox->currentIndex()!=0&&this_customer.data_pack.via_city_3_ID!=0)
+        ui->Via_3_ComboBox->setCurrentIndex(this_customer.data_pack.via_city_3_ID);
+    else
+        ui->Via_3_ComboBox->setCurrentIndex(0);
+
     ui->Customer_Plan_List->clear();
     for(vector<shift>::iterator now_plan=this_customer.customer_shift.begin();now_plan!=this_customer.customer_shift.end();now_plan++)//显示当前旅客计划表
     {
-        ui->Customer_Plan_List->addItem(QString::number(now_plan->shift_ID)+"\n"+parent_city_dict->get_city_name(now_plan->begin_city_ID)+"\n"+parent_city_dict->get_city_name(now_plan->end_city_ID));
+        ui->Customer_Plan_List->addItem(QString::number(now_plan->shift_ID)+"\n"
+                                        +parent_city_dict->get_city_name(now_plan->begin_city_ID)+"\t"+now_plan->begin_Qdatetime.toString()+"\n"
+                                        +parent_city_dict->get_city_name(now_plan->end_city_ID)+"\t"+now_plan->end_Qdatetime.toString());
     }
 }

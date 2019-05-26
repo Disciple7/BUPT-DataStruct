@@ -5,8 +5,6 @@
 #include"log.h"
 #include<iostream>
 
-#define CITY_NUM 10
-
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -22,10 +20,7 @@ MainWindow::MainWindow(QWidget *parent) :
     current_datetime=QDateTime::currentDateTime();
     logInit();
     logEvent();
-    if(DEV_MODE)
-        timer.start(1000);
-    else
-        timer.start(10000);//                                     正式版本timer应该为10000，这里用1000，更新快一点
+    timer.start(10000);//                                     正式版本timer应该为10000，这里用1000，更新快一点
 
     //初始化一些航班表
     shift_table_init(city_dict,shift_table,current_datetime);
@@ -36,9 +31,10 @@ MainWindow::MainWindow(QWidget *parent) :
         for(vector<shift>::iterator now_shift=now_shift_line->begin();now_shift!=now_shift_line->end();now_shift++)
         {
             ui->Shift_Table_Widget->addItem(QString::number(now_shift->shift_ID)+"\t"+city_dict.get_city_name(now_shift->begin_city_ID)+"\t"+city_dict.get_city_name(now_shift->end_city_ID)+"\t"+now_shift->begin_Qdatetime.time().toString()+"\t"+now_shift->end_Qdatetime.time().toString()
-                                            +"\t"+QString::number(now_shift->frequncy)+"day(s)");
+                                            +"\t"+QString::number(now_shift->frequncy)+"day(s)\t"+now_shift->begin_Qdatetime.toString()+"\t"+now_shift->end_Qdatetime.toString());
         }
     }
+    ui->statusBar->showMessage(current_datetime.toString());
     //子窗口创建，传递city_dict的指针，（子窗口的项目填充延迟到第一次打开时），连接子窗口用户数据到主窗口的事件
     subwindow_1 = new subwindow(this);
     subwindow_1->parent_city_dict=&city_dict;
@@ -101,13 +97,18 @@ void MainWindow::QTimerEvent()
     //将所有航班的信息与定时器做比较，把航班开始时间小于定时器时间的航班加上一个周期
     //绘制地图（选）
     //**以下迭代器中的算法仅为模板，其他部分设计完成后需要重写。**
-    logEvent(current_datetime.date(),current_datetime.time());
     current_datetime=current_datetime.addSecs(3600);//加上3600秒（一小时）
+    logEvent(current_datetime.date(),current_datetime.time());
     //旅客信息类容器的刷新
     for(vector<customer>::iterator now_customer=customer_list.begin();now_customer!=customer_list.end();)
     {
         for(vector<shift>::iterator now_plan = now_customer->customer_shift.begin();now_plan!=now_customer->customer_shift.end();)
         {//该循环刷新某个旅客的计划
+            if(now_plan->begin_Qdatetime<=current_datetime)
+            {
+                now_customer->data_pack.start_city_ID=now_plan->begin_city_ID;//修改旅客的出发地点为航班到达地点，毕竟在车上不能中途下去
+                cout<<"Customer "<<now_customer->data_pack.customer_ID<<" , Shift "<<now_plan->shift_ID<<" has begun."<<endl;
+            }
             if(now_plan->end_Qdatetime<=current_datetime)//如果正乘坐的航班结束时间晚于当前时间，把这个航班从旅客计划表上删除
             {
                 logEvent(now_customer->data_pack.customer_ID,now_plan->shift_ID);
@@ -149,7 +150,7 @@ void MainWindow::QTimerEvent()
                     }
                 }
                 ui->Shift_Table_Widget->addItem(QString::number(now_shift->shift_ID)+"\t"+city_dict.get_city_name(now_shift->begin_city_ID)+"\t"+city_dict.get_city_name(now_shift->end_city_ID)+"\t"+now_shift->begin_Qdatetime.time().toString()+"\t"+now_shift->end_Qdatetime.time().toString()
-                                                +"\t"+QString::number(now_shift->frequncy)+"day(s)");
+                                                +"\t"+QString::number(now_shift->frequncy)+"day(s)\t"+now_shift->begin_Qdatetime.toString()+"\t"+now_shift->end_Qdatetime.toString());
             }
             else
             {
@@ -157,7 +158,6 @@ void MainWindow::QTimerEvent()
             }
         }
     }
-
     if(ui->Customer_Table_Widget->count()==0)//当旅客列表都被删除时，Change按钮恢复不可点击状态
         ui->Change_Button->setEnabled(false);
     ui->statusBar->showMessage(current_datetime.toString());//刷新状态栏上的日期和时间
@@ -166,6 +166,7 @@ void MainWindow::QTimerEvent()
 
 void MainWindow::new_customer_created_slot(customer new_customer)
 {
+
     Customer_ID delete_customer_ID=new_customer.data_pack.customer_ID;
     bool delete_customer_ID_flag=false;
     for(vector<customer>::iterator now_customer=customer_list.begin();now_customer!=customer_list.end();)
@@ -179,11 +180,8 @@ void MainWindow::new_customer_created_slot(customer new_customer)
             now_customer++;
     }//检索并删除旧的customer信息（如果有的话）
 
-    if(DEV_MODE)//调试模式，塞一个航班试试看
-    {
-        shift new_shift=shift_table.back().front();
-        new_customer.customer_shift.push_back(new_shift);
-    }
+    //调用策略函数，设置该乘客的行程。
+    cout<<new_customer.strategy(shift_table,current_datetime)<<endl;
 
     customer_list.push_back(new_customer);//无论是否已存在这个customer，都把它加入列表
     if(delete_customer_ID_flag==false)//如果上面的删除没有删除掉customer_ID，则说明是一个新的ID，加入到窗口中。
@@ -196,17 +194,84 @@ void MainWindow::new_customer_created_slot(customer new_customer)
 
 void shift_table_init(city_name_dict& city_dict,vector<vector<shift>>& shift_table,QDateTime current_datetime)
 {
-    qsrand(0);//随机种子设置成0，方便测试
-    int i;
+    //读取城市名称列表
+    fstream city_name_file;
+    if(DEV_MODE)
+        city_name_file.open("D:\\coding\\Qt\\Travel_System\\city_name.csv",ios::in|ios::out);
+    else
+        city_name_file.open("city_name.csv");
+    if(!city_name_file.good())
+    {
+        cerr<<"Open Name File Failure"<<endl;
+        abort();
+    }
+    string city_name_string;
+    city_name_file>>city_name_string;
+    QStringList Qcity_name=QString::fromStdString(city_name_string).split(',');
+    int i;//i是循环计数变量
+    int CITY_NUM=Qcity_name.size()-1;//文件中有一个Blank，因此CITY_NUM是11个。
+    for(i=0;i<CITY_NUM+1;i++)
+        city_dict.city_name_list.push_back(Qcity_name[i]);
+
+    //初始化航班表数据结构
     for(i=0;i<CITY_NUM+1;i++)//压11个城市，0号城市(Blank)，没有航班。
     {
         vector<shift> shift_line;
         shift_table.push_back(shift_line);
-        if(i==0)
-            city_dict.city_name_list.push_back("(Blank)");
-        else
-            city_dict.push_random_string(3,i);//随便给一个城市起3个字符的名字
     }
+
+    //读取城市航班表
+    fstream shift_file;
+    if(DEV_MODE)
+        shift_file.open("D:\\coding\\Qt\\Travel_System\\shift.csv",ios::in|ios::out);
+    else
+        shift_file.open("shift.csv");
+    if(!shift_file.good())
+    {
+        cerr<<"Open Shift File Failure"<<endl;
+        abort();
+    }
+    while(shift_file.good()&&shift_file.peek()!=EOF)
+    {
+        string tmp_string;//读取文件一行
+        shift_file>>tmp_string;
+        QStringList Qtmp_string_list=QString::fromStdString(tmp_string).split(',');//切割成List
+        if(Qtmp_string_list.size()!=6)
+            break;
+        shift new_shift;
+        new_shift.begin_city_ID=Qtmp_string_list[0].toInt();
+        new_shift.end_city_ID=Qtmp_string_list[1].toInt();
+        new_shift.shift_ID=Qtmp_string_list[2].toInt();
+        new_shift.money_cost=Qtmp_string_list[3].toInt();
+        QTime tmp_time(Qtmp_string_list[4].toInt(),0,0,0);//日期是现在的日期，但时间是输入的时间
+        current_datetime.setTime(tmp_time);
+        new_shift.begin_Qdatetime=current_datetime;
+        tmp_time.setHMS(Qtmp_string_list[5].toInt(),0,0,0);
+        current_datetime.setTime(tmp_time);
+        new_shift.end_Qdatetime=current_datetime;
+        if(new_shift.begin_Qdatetime<current_datetime)
+        {
+            new_shift.begin_Qdatetime=new_shift.begin_Qdatetime.addDays(1);
+            new_shift.end_Qdatetime=new_shift.end_Qdatetime.addDays(1);
+        }
+        if(new_shift.begin_Qdatetime>new_shift.end_Qdatetime)
+        {
+            new_shift.end_Qdatetime=new_shift.end_Qdatetime.addDays(1);
+            new_shift.time_cost_hours=24;
+        }
+        else
+            new_shift.time_cost_hours=0;
+        new_shift.frequncy=1;
+        new_shift.transport_ID=0;
+        new_shift.time_cost_hours+=Qtmp_string_list[5].toInt()-Qtmp_string_list[4].toInt();
+        shift_table[new_shift.begin_city_ID].push_back(new_shift);
+    }
+
+
+    /*
+    qsrand(0);//随机种子设置成0，方便测试
+    int i;
+
     for(i=0;i<CITY_NUM+1;i++)
     {
         shift new_shift;
@@ -220,5 +285,5 @@ void shift_table_init(city_name_dict& city_dict,vector<vector<shift>>& shift_tab
         new_shift.money_cost=(qrand()%1000)*new_shift.time_cost_hours/(new_shift.transport_ID+1);
         new_shift.frequncy=1;
         shift_table[new_shift.begin_city_ID].push_back(new_shift);
-    }
+    }*/
 }

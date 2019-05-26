@@ -45,9 +45,8 @@ public://如果需要的话这个也可以改成public
 public://写private太麻烦了，干脆全部public了，省的还要写set和get函数一大堆。
     Data_Pack data_pack;
 public:
-	void strategy1st(const vector<vector<shift>> shift_table);//传入航班表，函数的作用是计算该旅客的计划，并按时间顺序压到vector中。
-	void strategy2nd(const vector<vector<shift>> shift_table);//传一个二维vector可能会发生意想不到的结果（vector的底层也是指针），考虑使用全局变量作为航班表。
-	void strategy3rd(const vector<vector<shift>> shift_table);
+    int strategy(const vector<vector<shift>> shift_table,QDateTime now_datetime);//传入航班表，函数的作用是计算该旅客的计划，并按时间顺序压到vector中。
+
 public:
     customer();
     customer(Customer_ID);
@@ -64,7 +63,10 @@ public:
     ~city_name_dict();
     QString get_city_name(City_ID city_id);
     City_ID get_city_id(QString city_name);
-    void push_random_string(int length,int rand_seed);
 };
+int add_city(int size,vector<QDateTime>& weight,vector<bool> is_checked);//策略2用的，寻找一个最短时间的城市
+int add_city(int size,vector<int>& weight,vector<bool> is_checked);//策略1用的，寻找一个最小花费的城市。
+void flush_shift_plan(QDateTime& now_datetime,vector<vector<shift>>& shift_table_for_plan);//每次加入一个航班后，都要看这个航班的结束时间（写到now_datetime里了）是不是早于某些航班的开始时间。如果是则刷新这些航班（日期加1）
+
 
 #endif //SERVER_H
