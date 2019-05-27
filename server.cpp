@@ -200,6 +200,7 @@ int customer::strategy(vector<vector<shift>> shift_table,QDateTime true_datetime
                 }
                 customer_plan.push_back(shortest_shift_link[destination][copy_shift_num]);
             }
+            flush_shift_plan(customer_plan);//即使是最少花费也要更新一下计划表，以免赶不上车
             destination_QDatetime=customer_plan.back().end_Qdatetime;//下一轮的开始时间更新为已经选择航班的最晚时间
             break;
         }
